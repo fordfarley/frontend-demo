@@ -7,7 +7,7 @@ const socket: Socket = io(process.env.REACT_APP_BACKEND_URL || "http://localhost
 interface Message {
   userId: string;
   username: string;
-  text: string;
+  message: string; 
 }
 
 const App: React.FC = () => {
@@ -35,7 +35,10 @@ const App: React.FC = () => {
 
   const sendMessage = () => {
     if (message.trim()) {
-      socket.emit("message", message);
+      socket.emit("message", {
+          username: username,
+          message: message,
+      });
       setMessage("");
     }
   };
@@ -59,7 +62,7 @@ const App: React.FC = () => {
           <div>
             {messages.map((msg, index) => (
               <p key={index}>
-                <strong>{msg.username}:</strong> {msg.text}
+                <strong>{msg.username}:</strong> {msg.message}
               </p>
             ))}
           </div>
