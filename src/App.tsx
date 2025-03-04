@@ -17,6 +17,10 @@ const App: React.FC = () => {
   const [isUsernameSet, setIsUsernameSet] = useState<boolean>(false);
 
   useEffect(() => {
+    socket.on("messageHistory", (history: Message[]) => {
+      setMessages(history);
+    });
+    
     socket.on("message", (data: Message) => {
       setMessages((prev) => [...prev, data]);
     });
