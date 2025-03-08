@@ -28,13 +28,11 @@ const App: React.FC = () => {
 
     // Mostrar "escribiendo" cuando otro usuario está escribiendo
     socket.on("typing", (username: string) => {
-      console.log(`${username} está escribiendo...`);
       setTypingUser(username);
     });
 
     // Ocultar "escribiendo" cuando el usuario deja de escribir
     socket.on("stopTyping", () => {
-      console.log("Se detuvo el indicador de escribiendo");
       setTypingUser(null);
     });
 
@@ -65,12 +63,9 @@ const App: React.FC = () => {
   };
 
   const handleTyping = () => {
-    console.log("Enviando evento Typing" + username);
     socket.emit("typing", username);
-
     // Enviar "stopTyping" si no se escribe en 2 segundos
     setTimeout(() => {
-      console.log("Enviando evento stopTyping");
       socket.emit("stopTyping");
     }, 2000);
   };
