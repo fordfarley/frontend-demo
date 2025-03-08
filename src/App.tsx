@@ -7,7 +7,7 @@ const socket: Socket = io(process.env.REACT_APP_BACKEND_URL || "http://localhost
 interface Message {
   userId: string;
   username: string;
-  message: string; 
+  message: string;
 }
 
 const App: React.FC = () => {
@@ -15,18 +15,32 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isUsernameSet, setIsUsernameSet] = useState<boolean>(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
 
   useEffect(() => {
     socket.on("messageHistory", (history: Message[]) => {
       setMessages(history);
     });
-    
+
     socket.on("message", (data: Message) => {
       setMessages((prev) => [...prev, data]);
     });
 
+    // Mostrar "escribiendo" cuando otro usuario está escribiendo
+    socket.on("typing", (username: string) => {
+      setTypingUser(username);
+    });
+
+    // Ocultar "escribiendo" cuando el usuario deja de escribir
+    socket.on("stopTyping", () => {
+      setTypingUser(null);
+    });
+
     return () => {
+      socket.off("messageHistory")
       socket.off("message");
+      socket.off("typing");
+      socket.off("stopTyping");
     };
   }, []);
 
@@ -40,11 +54,21 @@ const App: React.FC = () => {
   const sendMessage = () => {
     if (message.trim()) {
       socket.emit("message", {
-          username: username,
-          message: message,
+        username: username,
+        message: message,
       });
       setMessage("");
+      socket.emit("stopTyping");
     }
+  };
+
+  const handleTyping = () => {
+    socket.emit("typing", username);
+
+    // Enviar "stopTyping" si no se escribe en 2 segundos
+    setTimeout(() => {
+      socket.emit("stopTyping");
+    }, 2000);
   };
 
   return (
@@ -69,11 +93,19 @@ const App: React.FC = () => {
                 <strong>{msg.username}:</strong> {msg.message}
               </p>
             ))}
+            {typingUser && (
+              <p style={{ fontStyle: "italic", color: "gray" }}>
+                {typingUser} está escribiendo...
+              </p>
+            )}
           </div>
           <input
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleTyping();
+          }}
             placeholder="Escribe un mensaje..."
           />
           <button onClick={sendMessage}>Enviar</button>
